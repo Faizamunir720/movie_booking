@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<a class="back-link" href="/">&larr; Back to movies</a>
+<h1 class="page-title">{{ movie.title }} <span class="meta">— {{ showtime }}</span></h1>
+<p class="meta" style="margin-top:-14px;margin-bottom:20px;">{{ left }} of {{ total }} seats available · ${{ '%.2f'|format(price) }} per seat</p>
+
+<div class="screen-wrap">
+  <div class="screen"></div>
+  <div class="screen-label">SCREEN</div>
+</div>
+<div class="seat-map">
+  {% for r in rows %}
+  <div class="row">
+    <div class="row-label">{{ r }}</div>
+    {% for n in range(1, seats_per_row + 1) %}
+      {% set label = r ~ n %}
+      <div class="seat{% if label in booked %} booked{% endif %}" data-seat="{{ label }}" onclick="toggleSeat(this)">{{ n }}</div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+<div class="legend">
+  <span><span class="sw" style="background:var(--panel-2);border:1px solid var(--border)"></span>Available</span>
+  <span><span class="sw" style="background:var(--accent)"></span>Selected</span>
+  <span><span class="sw" style="background:var(--booked)"></span>Booked</span>
+</div>
+
+<form class="panel" method="POST" action="{{ url_for('book', movie_id=movie_id, showtime=showtime) }}">
+  <div class="summary-row"><span>Seats</span><span id="seatList">none selected</span></div>
+  <div class="summary-total"><span>Total</span><span>$<span id="total">0.00</span></span></div>
+  <input type="hidden" name="seats" id="seatsInput">
+  <label>Full name</label>
+  <input type="text" name="name" required>
+  <label>Email</label>
+  <input type="email" name="email" required>
+  <button class="btn" id="submitBtn" type="submit" disabled style="width:100%">Confirm Booking</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+  const price = {{ price }};
+  let selected = [];
+  function toggleSeat(el) {
+    if (el.classList.contains('booked')) return;
+    const seat = el.dataset.seat;
+    if (el.classList.toggle('selected')) {
+      selected.push(seat);
+    } else {
+      selected = selected.filter(s => s !== seat);
+    }
+    document.getElementById('seatList').textContent = selected.length ? selected.join(', ') : 'none selected';
+    document.getElementById('total').textContent = (selected.length * price).toFixed(2);
+    document.getElementById('seatsInput').value = selected.join(',');
+    document.getElementById('submitBtn').disabled = selected.length === 0;
+  }
+</script>
+{% endblock %}
